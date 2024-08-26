@@ -1,0 +1,12 @@
+name: api_pilot
+
+services:
+  api:
+    image: alert-pilot
+    working_dir: /app
+    ports:
+      - "20688:8000"
+    volumes:
+      - ${PWD}/result:/app/result
+      - ${PWD}/api-pilot.R:/app/api.R
+    command: api.R
