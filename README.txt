@@ -20,3 +20,7 @@ docker run -it --rm --entrypoint /bin/bash -w /app plumber_db
 curl -w '\n' http://localhost:20619/fls
 curl -w '\n' http://localhost:20619/db
 curl -w '\n' http://localhost:20619/ -d "fish=boi_pool"
+
+
+# Copy a file from a docker container
+https://docs.docker.com/reference/cli/docker/container/cp/
