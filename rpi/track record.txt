@@ -1,0 +1,89 @@
+lsusb
+
+dmesg | tail -n 15
+
+https://www.sealevel.com/support/how-to-configure-usb-serial-adapters-in-linux/
+
+ls -al /dev/ttyUSB*
+
+ls /sys/bus
+# note no usb-serial directory
+modprobe ftdi_sio
+# now /sys/bus/usb-serial exists!
+# the modprobe ftdi_sio vendor= product= syntax has been removed
+#   Need to add vendor and product to the new_id folder created in
+#   /sys/bus/usb-serial/drivers/ftdi_sio/ when we ran modprobe ftdi_sio
+#   However, need to be root to do this (sudo su)
+echo 0c52 a021 > /sys/bus/usb-serial/drivers/ftdi_sio/new_id 
+
+## create udev rule: https://opensource.com/article/18/11/udev
+## located in: /etc/udev/rules.d
+
+plug in
+
+dmesg | tail -n 15
+
+[ 2888.931790] usbcore: registered new interface driver ftdi_sio
+[ 2888.931844] usbserial: USB Serial support registered for FTDI USB Serial Device
+[ 3181.792249] usb 1-1.3: new full-speed USB device number 4 using xhci_hcd
+[ 3181.910298] usb 1-1.3: New USB device found, idVendor=0c52, idProduct=a021, bcdDevice= 6.00
+[ 3181.910325] usb 1-1.3: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[ 3181.910337] usb 1-1.3: Product: 2107 - SeaLINK+485-DB9
+[ 3181.910348] usb 1-1.3: Manufacturer: Sealevel
+[ 3181.910357] usb 1-1.3: SerialNumber: SLQF4jA3
+[ 3181.928088] ftdi_sio 1-1.3:1.0: FTDI USB Serial Device converter detected
+[ 3181.928307] usb 1-1.3: Detected FT232R
+[ 3181.932401] usb 1-1.3: FTDI USB Serial Device converter now attached to ttyUSB0
+
+lsusb
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 001 Device 004: ID 0c52:a021 Sealevel Systems, Inc. 2107 - SeaLINK+485-DB9
+Bus 001 Device 002: ID 2109:3431 VIA Labs, Inc. Hub
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+secor@raspberrypi:~ $  ls -al /dev/ttyUSB*
+crwxrwxrwx 1 root dialout 188, 0 Aug  9 16:27 /dev/ttyUSB0
+
+
+#udev rules:
+ls /etc/udev/rules.d/
+cat /etc/udev/rules.d/98-seacom.rules
+#ACTION=="add", ATTRS{idVendor}=="0c52", ATTRS{idProduct}=="a021", \
+#RUN+="/sbin/modprobe ftdi_sio" \
+#RUN+="/bin/sh -c 'echo 0c52 a021 > /sys/bus/usb-serial/drivers/ftdi_sio/new_id'"
+
+
+#rpi measure temperature
+/usr/bin/vcgencmd measure_temp
+
+
+# cron job
+crontab -e
+
+
+
+minicom -D /dev/seacom -S minicom_script.txt  -C output.txt
+(minicom -D /dev/seacom -S minicom_script.txt  -C output.txt < minicom_exit.txt)
+
+
+# check busy ports
+ps -ef |grep tty
+
+
+# load ftdi_sio on startup
+https://unix.stackexchange.com/questions/71064/systemd-automate-modprobe-command-at-boot-time
+## Added "ftdi_sio" to /etc/modules-load.d/modules.conf
+
+
+# Turn on and off wifi
+ip link set dev wlan0 down
+ip link set dev wlan0 up
+
+#monitor crontab
+journalctl -u cron -n 15
+
+
+#####
+l /sys/bus/usb/drivers/ftdi_sio
+echo "1-1.3:1.0" | sudo tee /sys/bus/usb/drivers/ftdi_sio/unbind
+echo "1-1.3:1.0" | sudo tee /sys/bus/usb/drivers/ftdi_sio/bind

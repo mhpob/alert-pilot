@@ -1,0 +1,2 @@
+send *450281.0#20,INFO
+send *450281.0#20,RTMNOW
