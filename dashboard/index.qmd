@@ -7,9 +7,93 @@ format: dashboard
 library(data.table)
 library(ggplot2)
 
-parsed_db  <- fread('dashboard/db_parsed.csv')
+parsed_db  <- fread('db_parsed.csv')
 
+updated <- tail(parsed_db, 1)$receiver_time
+attr(updated, "tzone") <- "America/New_York"
+```
+
+Last updated: `r updated`
+
+# Sturgeon
+
+## Row {.tabset}
+
+```{r}
+#| title: Detections
 
 ggplot(parsed_db) +
-    geom_line(aes(x = cpu_time, y = cpu_temp))
+    geom_line(aes(x = receiver_time, y = DC)) +
+    labs(x = NULL, y = 'Fish detections') +
+    theme_minimal()
+```
+
+```{r}
+#| title: Pings
+
+ggplot(parsed_db) +
+    geom_line(aes(x = receiver_time, y = PC)) +
+    labs(x = NULL, y = 'Pings') +
+    theme_minimal()
+```
+
+# System health
+
+## Row {.tabset}
+
+```{r}
+#| title: Water temp.
+ggplot(parsed_db) +
+    geom_line(aes(x = receiver_time, y = T)) +
+    labs(x = NULL, y = 'Temperature (C)') +
+    theme_minimal()
+```
+```{r}
+#| title: CPU temp.
+ggplot(parsed_db) +
+    annotate('rect',
+        xmin = as.POSIXct(-Inf), xmax = as.POSIXct(Inf),
+        ymin = 70, ymax = Inf,
+        fill = 'red',
+        alpha = 0.2) +
+    annotate('rect',
+        xmin = as.POSIXct(-Inf), xmax = as.POSIXct(Inf),
+        ymin = 60, ymax = 70,
+        fill = "yellow",
+        alpha = 0.2) +
+    annotate('rect',
+        xmin = as.POSIXct(-Inf), xmax = as.POSIXct(Inf),
+        ymin = -Inf, ymax = 60,
+        fill = "lightgreen",
+        alpha = 0.2) +
+    geom_line(aes(x = cpu_time, y = cpu_temp)) +
+    labs(x = NULL, y = 'CPU temperature (C)') +
+    theme_minimal()
+```
+
+## Row {.tabset}
+
+```{r}
+#| title: Battery voltage
+
+ggplot(parsed_db) +
+    geom_line(aes(x = receiver_time, y = BV)) +
+    labs(x = NULL, y = 'Battery voltage (V)') +
+    theme_minimal()
+```
+```{r}
+#| title: Battery usage
+
+ggplot(parsed_db) +
+    geom_line(aes(x = receiver_time, y = BU)) +
+    labs(x = NULL, y = 'Battery used (%)') +
+    theme_minimal()
+```
+```{r}
+#| title: Receiver draw
+
+ggplot(parsed_db) +
+    geom_line(aes(x = receiver_time, y = I)) +
+    labs(x = NULL, y = 'Current consumption (mA)') +
+    theme_minimal()
 ```
