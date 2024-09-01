@@ -10,3 +10,4 @@ services:
       - ${PWD}/result:/app/result
       - ${PWD}/api-pilot.R:/app/api.R
     command: api.R
+    restart: unless-stopped
