@@ -1,0 +1,10 @@
+name: dash
+
+services:
+  api:
+    image: dash
+    working_dir: /input
+    volumes:
+      - $PWD:/input
+      - $PWD/../result:/data
+    command: quarto render sturgeon-alert-dashboard.qmd --output-dir html
