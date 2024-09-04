@@ -44,4 +44,4 @@ raw_db[, let(
 raw_db[, cpu_temp := as.numeric(sub(".*temp=(.*)'C", '\\1', sys_temp))]
 raw_db[, cpu_time := as.POSIXct(sub(' temp.*', '', sys_temp), tz = 'UTC')]
 
-fwrite(raw_db, 'db_parsed.csv')
+# fwrite(raw_db, 'dash/db_parsed.csv')
