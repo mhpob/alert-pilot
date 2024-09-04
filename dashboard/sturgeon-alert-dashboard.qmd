@@ -6,6 +6,7 @@ format: dashboard
 ```{r}
 library(data.table)
 library(ggplot2)
+library(plotly)
 
 source('resp_parse.R')
 parsed_db <- fread('/data/db_parsed.csv')
@@ -22,20 +23,22 @@ Last updated: `r updated`
 
 ```{r}
 #| title: Detections
-
-ggplot(parsed_db) +
-    geom_line(aes(x = receiver_time, y = DC)) +
-    labs(x = NULL, y = 'Fish detections') +
-    theme_minimal()
+ggplotly(
+    ggplot(parsed_db) +
+        geom_line(aes(x = receiver_time, y = DC)) +
+        labs(x = NULL, y = 'Fish detections') +
+        theme_minimal()
+)
 ```
 
 ```{r}
 #| title: Pings
-
-ggplot(parsed_db) +
-    geom_line(aes(x = receiver_time, y = PC)) +
-    labs(x = NULL, y = 'Pings') +
-    theme_minimal()
+ggplotly(
+    ggplot(parsed_db) +
+        geom_line(aes(x = receiver_time, y = PC)) +
+        labs(x = NULL, y = 'Pings') +
+        theme_minimal()
+)
 ```
 
 # System health
@@ -44,13 +47,18 @@ ggplot(parsed_db) +
 
 ```{r}
 #| title: Water temp.
-ggplot(parsed_db) +
-    geom_line(aes(x = receiver_time, y = T)) +
-    labs(x = NULL, y = 'Temperature (C)') +
-    theme_minimal()
+
+ggplotly(
+    ggplot(parsed_db) +
+        geom_line(aes(x = receiver_time, y = T)) +
+        labs(x = NULL, y = 'Temperature (C)') +
+        theme_minimal()
+)
 ```
 ```{r}
 #| title: CPU temp.
+
+ggplotly(
 ggplot(parsed_db) +
     annotate('rect',
         xmin = as.POSIXct(-Inf), xmax = as.POSIXct(Inf),
@@ -70,6 +78,7 @@ ggplot(parsed_db) +
     geom_line(aes(x = cpu_time, y = cpu_temp)) +
     labs(x = NULL, y = 'CPU temperature (C)') +
     theme_minimal()
+)
 ```
 
 ## Row {.tabset}
@@ -77,24 +86,28 @@ ggplot(parsed_db) +
 ```{r}
 #| title: Battery voltage
 
+ggplotly(
 ggplot(parsed_db) +
     geom_line(aes(x = receiver_time, y = BV)) +
     labs(x = NULL, y = 'Battery voltage (V)') +
     theme_minimal()
+)
 ```
 ```{r}
 #| title: Battery usage
-
+ggplotly(
 ggplot(parsed_db) +
     geom_line(aes(x = receiver_time, y = BU)) +
     labs(x = NULL, y = 'Battery used (%)') +
     theme_minimal()
+)
 ```
 ```{r}
 #| title: Receiver draw
-
+ggplotly(
 ggplot(parsed_db) +
     geom_line(aes(x = receiver_time, y = I)) +
     labs(x = NULL, y = 'Current consumption (mA)') +
     theme_minimal()
+)
 ```

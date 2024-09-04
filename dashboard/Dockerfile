@@ -14,7 +14,7 @@ RUN gdebi --non-interactive quarto-linux-amd64.deb
 RUN rm quarto-linux-amd64.deb
 
 # Install needed packages
-RUN R -e "install.packages(c('data.table', 'ggplot2', 'quarto', 'knitr', 'rmarkdown'))"
+RUN R -e "install.packages(c('data.table', 'ggplot2', 'quarto', 'knitr', 'rmarkdown', 'plotly'))"
 
 RUN mkdir -m 777 input
 RUN mkdir -m 777 data
