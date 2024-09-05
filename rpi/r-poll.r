@@ -16,21 +16,11 @@ open(vr2c_con)
 
 write.serialConnection(vr2c_con, '*450281.0#20')
 Sys.sleep(0.5)
-flush(vr2c_con)
-
 
 write.serialConnection(vr2c_con, '*450281.0#20,RTMNOW')
-Sys.sleep(0.5)
+Sys.sleep(2)
 resp <- read.serialConnection(vr2c_con)
-iter <- 1
-
-while(!grepl('>$', resp)){
-  resp <- paste(resp, read.serialConnection(vr2c_con), sep = '\n')
-  
-  if (iter >= 15) break
-  
-  iter <- iter + 1
-}
+Sys.sleep(2)
 
 write.serialConnection(vr2c_con, '*450281.0#20,QUIT')
 
