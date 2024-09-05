@@ -16,8 +16,18 @@ RUN rm quarto-linux-amd64.deb
 # Install needed packages
 RUN R -e "install.packages(c('data.table', 'ggplot2', 'quarto', 'knitr', 'rmarkdown', 'plotly'))"
 
-RUN mkdir -m 777 input
+# RUN useradd obrien && \
+#     adduser obrien users && \
+#     usermod -aG sudo obrien
+
+RUN mkdir input
+# RUN chown obrien input
+# RUN cd input && \
+#     mkdir -m 777 html && \
+#     cd ..
 RUN mkdir -m 777 data
+
+# USER obrien
 
 # cd dashboard
 # docker build -t dash .
@@ -26,6 +36,6 @@ RUN mkdir -m 777 data
 #   -v $PWD/../result:/data \
 #   -w /input \
 #   dash \
-#   quarto render sturgeon-alert-dashboard.qmd
+#   quarto render index.qmd --output-dir html 
 
 # docker run -it -v $PWD:/input -w /input dash
