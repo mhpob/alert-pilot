@@ -11,3 +11,11 @@ services:
       - ${PWD}/api-pilot.R:/app/api.R
     command: api.R
     restart: unless-stopped
+
+  web:
+    image: nginx
+    volumes:
+     - ${PWD}/dashboard/html:/usr/share/nginx/html
+    ports:
+     - "8080:80"
+    restart: unless-stopped
