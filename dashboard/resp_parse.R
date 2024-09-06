@@ -8,7 +8,7 @@ raw_db[, receiver := sub('\\*(\\d{6}).*', '\\1', resp)]
 
 ## Grab receiver time
 grab_rec_date <- function(x){
-  res <- sub(".*?(.{4}-..-.. ..:..:..).*", '\\1', x)
+  res <- sub(".*?(.{4}-..-.. ..:..:..),STS.*", '\\1', x)
   ifelse(grepl('^\\*|\\|', res), NA, res)
 }
 raw_db[, receiver_time := grab_rec_date(resp)]
@@ -30,18 +30,44 @@ raw_db[, (vars) := lapply(vars, function(.) grab_numeric_data(resp, .))]
 
 
 ## Handle XYZ
+tilt <- sub('.*XYZ=([^,]*).*', '\\1', raw_db$resp)
+tilt <- ifelse(grepl("^[\\*\\|]", tilt), NA, tilt)
+
 raw_db[, let(
-  X = sub('.*XYZ=([^:]*).*', '\\1', resp),
-  Y = sub('.*:(.*):.*', '\\1', resp),
-  Z = sub('.*:.*:([^,]*).*', '\\1', resp)
-)]
-raw_db[, let(
-  X = ifelse(grepl('^\\*', X), NA, X),
-  Y = ifelse(grepl('^\\*', Y), NA, Y),
-  Z = ifelse(grepl('^\\*', Z), NA, Z)
+  X = sub('^([^:]*).*', '\\1', tilt),
+  Y = sub('.*:(.*):.*', '\\1', tilt),
+  Z = sub('.*:(.*)$', '\\1', tilt)
 )]
 
+
+## Grap RPi temperature and time
 raw_db[, cpu_temp := as.numeric(sub(".*temp=(.*)'C", '\\1', sys_temp))]
 raw_db[, cpu_time := as.POSIXct(sub(' temp.*', '', sys_temp), tz = 'UTC')]
 
+
+## Parse detections
+raw_db[
+  grepl(
+    "#..\\d{6},\\d+,\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},.*-.*,\\d+,#..",
+    resp
+  ),
+  detections :=
+    lapply(
+      strsplit(resp, "#"),
+      function(.) {
+        .[ { gregexpr(",", text = .) |> sapply(length) } == 5]
+      }
+    ) |>
+    sapply(function(.) gsub("^..", "", .)) |>
+    lapply(function(.) {
+      fread(
+        text = .,
+        col.names = c("receiver", "rec_seq", "datetimeutc",
+                      "codespace", "tag", "sensor"),
+        colClasses = 'character'
+      )
+    }
+    ) |>
+    as.character()
+]
 fwrite(raw_db, '/data/db_parsed.csv')
