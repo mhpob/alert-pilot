@@ -1,3 +1,2 @@
 /.quarto/
-dashboard/html/
-nginx/html
+dashboard/*html/

@@ -15,7 +15,7 @@ services:
   web:
     image: nginx
     volumes:
-     - ${PWD}/dashboard/html:/usr/share/nginx/html
+     - ${PWD}/dashboard/_html:/usr/share/nginx/html
     ports:
      - "8080:80"
     restart: unless-stopped
