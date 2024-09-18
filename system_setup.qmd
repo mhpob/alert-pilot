@@ -1,0 +1,176 @@
+---
+title: "Real-time Acoustic Biotelemetry System: Walkthrough"
+format:
+    html:
+        embed-resources: true
+author: "Mike O'Brien"
+---
+
+## Motivation
+Real-time or near-real-time systems are becoming critical to adaptive management
+of species of concern. In the underwater acoustic biotelemetry world, Innovasea
+is king, holding the largest market share of transmitters and receivers currently
+deployed. It makes sense, then, that many, myself included, would be drawn to
+incorporate this technology into any real-time systems planning.
+
+After discontinuing one of their first cabled receivers -- the VR2C -- in 2018,
+Innovasea has replaced it with the Rx-LIVE receiver. With the Rx-LIVE came a loss-leader,
+"carrier locked" model of operations wherein initial purchasing costs by
+the consumer are greatly reduced (on the order of $2000 USD), but a year-to-year
+cloud licensing fee is necessary in order to access data from the live
+receiver (on the order of $2000 USD per year).
+
+The benefits of this system are similar to other hosted cloud solutions:
+
+- Initially cheaper
+- Comes with a server that has constant internet and electricity, minimizing the
+    chance of down time
+- Someone else takes care of the set up
+- If it breaks, you have someone to call
+- Direct integration with the Innovasea customer data base
+
+There are down sides:
+
+- Maximum of 10 users are able to view the resultant dashboard (i.e., no public views)
+- Only [Innovasea environmental sensor](https://www.innovasea.com/fish-tracking/products/environmental-sensors/)
+    data streams can be integrated at the cost of $500 per data stream per year
+- The user must log in to download data for use in real time alerts or modeling
+- Innovasea EULA: By using the cloud system, the user gives Innovasea the right to
+    access uploaded data, create derivative products, and claim complete and sole 
+    ownership of that product.
+
+This document is presented with the hope of driving adoption of real-time acoustic
+biotelemetry for use in adaptive monitoring, dynamic modeling, and public stakeholder
+engagement.
+
+## What do you need?
+### Hardware
+- An Innovasea cabled receiver and cable
+    - [VR2C](https://go.innovasea.com/vr2c_manual.pdf) (discontinued)
+    - "Unlocked" [Rx-LIVE](https://www.innovasea.com/wp-content/uploads/2023/05/Innovasea_rx_live_receiver.pdf)
+        - Must be "unlocked" so that it produces the necessary ASCII output
+    - Both options use RS-485 output, often via a [designated USB dongle](https://www.sealevel.com/product/2107-usb-to-1-port-rs-485-db9-serial-interface-adapter/)
+
+- A stable "server" running Linux to receive messages
+    - This can be anything -- an old laptop, your campus' web server, a virtual
+        machine somewhere
+    - Should be something you expect to have 24/7 power and internet connectivity
+    - If you don't have much experience with Linux, go with
+        [Ubuntu](https://ubuntu.com/download/server). There's tons of help and
+        resources for this operating system on the internet
+
+- A remote server that is as physically small and as not-resource-intensive as 
+    possible.
+    - [Raspberry Pis](https://www.raspberrypi.com/) or [Arduino](https://www.arduino.cc/)
+        boards are great as they're nice and small
+    - Could also be an old laptop, but they'll run hotter in the summer sun and
+        draw more power!
+    - *NEED* two USB ports: one for the cellular modem and one for input from the
+        receiver.
+        - There are actually ways around this, but unless you want to do some
+            extra set up, this is the easiest way to go.
+
+- A cellular modem and SIM card
+    - If you're looking for the least amount of tinkering possible, the
+        [Sixfab 4G/LTE Raspberry Pi kit](https://sixfab.com/product/raspberry-pi-4g-lte-modem-kit/) 
+        has good walkthroughs, comes with an IoT SIM card, and installs some
+        middleware which allows you to talk to your remote server *while it's deployed
+        in the field*
+    - Obviously, you also need to be deploying in a place that has cellular 
+        connectivity. Connecting to satellite is beyond the scope of this walkthrough 
+        (i.e. I haven't done it and have no idea how to do so).
+
+### Software
+- Land-based server
+    - [Docker](https://docs.docker.com/engine/install/)
+        - Especially if you're using a server for which you don't have administrative  permissions, this is the one you want to beg and plead your administrator to install!
+- Remote server
+    - [libcurl](https://curl.se/libcurl/) to send your detections to the land-based
+        server
+    - Docker, again!
+- Free [Cloudflare](https://www.cloudflare.com/) account
+    - This will be used to securely host your dashboard without needing to learn
+        proper HTTP hosting and security
+- Custom domain
+    - Go buy one -- they're cheap! ($1+ per year, depending on how fancy you want
+        to be)
+
+### Sample shopping list (as of Sept 2024, in USD)
+
+**Total: $8940 initial cost + $5-$10/month for data + c. $5/year for domain registration**
+
+This assumes the receiver will be shore-powered and a designated shore-side server
+is available -- prevent e-waste and grab a slow laptop from the trash! Battery power
+will also need a 12V battery and an appropriately-sized solar panel.
+
+- Receiver, Innovasea: $8615
+    - Rx-LIVE: $5,765
+    - Unlocking fee: $2115
+    - 10m cable: $735
+- [RS-485 to USB](https://ftdichip.com/products/usb-rs485-we-1800-bt/): $40
+- [Some sort of 12V DC to AC transformer to power the receiver](https://www.amazon.com/dp/B07TZBDHMF/ref=pe_386300_440135490_TE_simp_item_image?th=1): $20
+- Raspberry Pi: $65
+    - [Raspberry Pi board](https://www.adafruit.com/product/4295): $35
+        - Model 4 to be compatible with modem, below
+    - [Micro SD card](https://www.amazon.com/s?k=Micro+SD+Memory+Cards): $15
+        - This is where the operating system (~2GB) and other things will be stored
+    - [Power cable](https://www.adafruit.com/product/4298): $8
+    - [Micro-HDMI to HDMI](https://www.adafruit.com/product/1358): $7
+        - Needed for initial set up. Only need one, so you can keep this around and
+            not worry about purchasing it next time.
+- [Sixfab 4G/LTE Raspberry Pi kit](https://sixfab.com/product/raspberry-pi-4g-lte-modem-kit/): $125
+- [Data plan](https://sixfab.com/pricing/#data-pricing): <$10 / month
+    - Can be purchased through the Sixfab account you generate, but you can also
+        likely find cheaper plans elsewhere
+- [Some sort of waterproof box to hold it all](https://www.amazon.com/dp/B0BN3BL467/ref=pe_386300_440135490_TE_simp_item_image?th=1): $25
+- Appropriate outdoor extension cord: $50
+- Domain name
+    - Poke around [TLD-List](https://tld-list.com/), you can find domains for as
+        little as $1-$2 per year
+
+## Preparation
+### Field server
+
+#### Initialize the Raspberry Pi
+
+Follow the [documentation here](https://www.raspberrypi.com/documentation/computers/getting-started.html) -- selecting the 64 bit Raspberry Pi OS (Debian) will work
+fine. It's outlined in there, but make sure to enable SSH. SSH (*secure shell*)
+will allow you to connect to the Pi from your own computer via WiFi, meaning you
+can disconnect the monitor, mouse, and keyboard after the initial set up is complete.
+Ignore all of the stuff about recommended software.
+
+When it is done, confirm that you can SSH into the Pi from your computer's
+terminal ([instructions are here](https://www.raspberrypi.com/documentation/computers/remote-access.html)). I suggest using [VS Code](https://code.visualstudio.com/)
+and the [Remote Explorer extension](https://code.visualstudio.com/docs/remote/ssh).
+
+#### Install Cellular modem
+
+SSH into the Pi and follow the [directions on the Sixfab website](https://docs.sixfab.com/docs/raspberry-pi-4g-lte-cellular-modem-kit-getting-started)
+to install and activate the modem and create a Sixfab account. The account is
+useful as their remote terminal is very useful for debugging while the Pi is
+deployed in the field.
+
+#### Install the USB/serial driver
+
+Now we need to make sure the Pi can talk to the receiver. In order to do this, we
+need to make sure the correct driver is installed.
+
+**note to self: need to make driver installer have arguments**
+```bash
+# change permissions
+chmod 755 add_seacom_driver.sh
+# switch to root
+sudo su
+# open crontab
+crontab -e
+# add reboot command
+#@reboot /home/secor/alert/add_seacom_driver.sh
+```
+- Docker
+- Turn off WiFi
+
+```bash
+ip link set dev wlan0 down
+```
+### Land-based server
+
