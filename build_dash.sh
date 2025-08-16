@@ -11,5 +11,5 @@ dc_then=$(tail -n 2 result/db.csv | head -n 1 | sed -n 's/.*DC=\(.*\),PC.*/\1/p'
 if [ "$dc_now" -gt "$dc_then" ]; then
   curl -X POST -H 'Content-type: application/json' \
   --data '{"text":"Sturgeon detected! Current count: '"$dc_now"'"}' \
-  https://hooks.slack.com/services/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
+  $(cat secrets)
 fi
