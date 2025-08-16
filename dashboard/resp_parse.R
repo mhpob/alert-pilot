@@ -8,11 +8,12 @@ raw_db[, receiver := sub('\\*(\\d{6}).*', '\\1', resp)]
 
 ## Grab receiver time
 grab_rec_date <- function(x){
-  res <- sub(".*?(.{4}-..-.. ..:..:..),STS.*", '\\1', x)
+  res <- sub(".*?(.{4}-..-.. ..:..:..\\....),STS.*", '\\1', x)
   ifelse(grepl('^\\*|\\|', res), NA, res)
 }
 raw_db[, receiver_time := grab_rec_date(resp)]
-raw_db[, receiver_time := as.POSIXct(receiver_time, tz = 'UTC')]
+raw_db[, receiver_time := as.POSIXct(receiver_time, 
+  format = "%Y-%m-%d %H:%M:%OS", tz = 'UTC')]
 
 ## Grab data
 grab_numeric_data <- function(data, var_imp) {
@@ -25,7 +26,7 @@ grab_numeric_data <- function(data, var_imp) {
   
   ifelse(grepl('^\\*', res), NA, res)
 }
-vars <- c('DC', 'PC', 'LV', 'BV', 'BU', 'I', 'T', 'DU', 'RU')
+vars <- c('DC', 'PC', 'LV', 'BV', 'BU', 'I', 'T', 'DU', 'RU', "N", "NP")
 raw_db[, (vars) := lapply(vars, function(.) grab_numeric_data(resp, .))]
 
 

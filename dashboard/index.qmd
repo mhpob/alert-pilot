@@ -16,19 +16,28 @@ parsed_db[, detections := sapply(detections, function(.) {
     as.data.table(eval(parse(text = .)))
 })]
 
+attr(parsed_db$receiver_time, "tzone") <- "America/New_York"
+attr(parsed_db$cpu_time, "tzone") <- "America/New_York"
+
+if(all(is.na(parsed_db$detections))){
+    detections <- data.table(
+col.names = c('rec', 'datetimeutc', 'codespace', 'tag', 'status', 'hash')
+    )
+    }else {
 detections <- rbindlist(parsed_db$detections)
-detections_missed <- fread('/data/detections.csv', quote = "",
-    col.names = c('rec', 'datetimeutc', 'codespace', 'tag', 'status', 'hash'),
-    colClasses = 'character')
-detections <- rbind(detections, detections_missed, fill = T)
+#detections_missed <- fread('/data/detections.csv', quote = "",
+#    col.names = c('rec', 'datetimeutc', 'codespace', 'tag', 'status', 'hash'),
+#    colClasses = 'character')
+#detections <- rbind(detections, detections_missed, fill = T)
 detections[, datetimeutc := as.POSIXct(datetimeutc)]
 setorder(detections, datetimeutc)
+}
 
 updated <- parsed_db[.N, receiver_time]
-attr(updated, "tzone") <- "America/New_York"
+#attr(updated, "tzone") <- "America/New_York"
 ```
 
-Last updated: `r updated`, eastern time
+Last updated: `r format(updated, "%Y-%m-%d %H:%M")` EDT
 
 # Sturgeon
 
@@ -149,32 +158,36 @@ ggplotly(
 ```
 
 ## Row {.tabset}
-
 ```{r}
-#| title: Battery voltage
-
+#| title: Line voltage
 ggplotly(
-ggplot(parsed_db) +
-    geom_line(aes(x = receiver_time, y = BV)) +
-    labs(x = NULL, y = 'Battery voltage (V)') +
-    theme_minimal()
+  ggplot(parsed_db) +
+      geom_line(aes(x = receiver_time, y = LV)) +
+      labs(x = NULL, y = 'Line voltage (V)') +
+      theme_minimal()
 )
 ```
 ```{r}
-#| title: Battery usage
+#| title: Memory usage
+mem <- melt(parsed_db[, .(receiver_time, RU, DU)],
+    measure.vars = c("DU", "RU"))
+
 ggplotly(
-ggplot(parsed_db) +
-    geom_line(aes(x = receiver_time, y = BU)) +
-    labs(x = NULL, y = 'Battery used (%)') +
-    theme_minimal()
+  ggplot(mem) +
+      geom_line(aes(x = receiver_time, y = value, color = variable)) +
+      labs(x = NULL, y = 'Memory (%)', color = "Type") +
+      theme_minimal()
 )
 ```
 ```{r}
-#| title: Receiver draw
+#| title: Noise
+noise <- melt(parsed_db[, .(receiver_time, N, NP)],
+    measure.vars = c("N", "NP"))
+
 ggplotly(
-ggplot(parsed_db) +
-    geom_line(aes(x = receiver_time, y = I)) +
-    labs(x = NULL, y = 'Current consumption (mA)') +
-    theme_minimal()
+  ggplot(noise) +
+      geom_line(aes(x = receiver_time, y = value, color = variable)) +
+      labs(x = NULL, y = 'Output Noise (dB)') +
+      theme_minimal()
 )
 ```

@@ -1,8 +1,13 @@
+# serial, httr2, and jsonlite packages are needed.
+
 suppressPackageStartupMessages(
     suppressWarnings(
         library(serial)
     )
 )
+
+#vr2c is 450281
+#rxlive is 457220
 
 vr2c_con <- serialConnection(
     port = 'seacom',
@@ -14,23 +19,38 @@ vr2c_con <- serialConnection(
 )
 open(vr2c_con)
 
-write.serialConnection(vr2c_con, '*450281.0#20')
+write.serialConnection(vr2c_con, '*457220.0#20,WAKE')
 Sys.sleep(0.5)
+#flush(vr2c_con)
 
-write.serialConnection(vr2c_con, '*450281.0#20,RTMNOW')
+# need to set time for RxLIVE
+write.serialConnection(vr2c_con, 
+    paste0('*457220.0#20,TIME=',format(Sys.time(), tz='UTC'))
+)
+Sys.sleep(2)
+flush_resp <- read.serialConnection(vr2c_con)
+
+
+write.serialConnection(vr2c_con, '*457220.0#20,RTMNOW')
 Sys.sleep(2)
 resp <- read.serialConnection(vr2c_con)
+#iter <- 1
 Sys.sleep(2)
+#while(!grepl(">$", resp)){
+#       resp <- paste(resp, read.serialConnection(vr2c_con), sep = '\n')
+#       if(iter >= 15) break
+#       iter <- iter + 1
+#}
 
-write.serialConnection(vr2c_con, '*450281.0#20,QUIT')
-
-close(vr2c_con)
+write.serialConnection(vr2c_con, '*457220.0#20,QUIT')
 
 cat(
-  resp,
-  file = "detection.log",
-  append = TRUE
+    resp,
+    file = "detection.log",
+    append = TRUE
 )
+
+close(vr2c_con)
 
 # System temperature
 sys_temp <- paste(
@@ -63,7 +83,7 @@ cat(
 ## POST ###
 library(httr2)
 
-req <- request('https://alert-pilot.obrien.page/') |> 
+req <- request('https://ingest-alert.obrien.page/') |> 
     req_headers("Accept" = "application/json") |> 
     req_body_json(
        list(
